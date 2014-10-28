@@ -1,0 +1,21 @@
+{
+    "require": {
+        "simple-html-dom/simple-html-dom": "1.5.*"
+    },
+    
+        
+    "repositories": [
+		{
+			"type": "vcs",
+			"url": "https://github.com/miclf/simple-html-dom"
+		}
+	],
+    
+     "autoload": {
+		"classmap": [
+			"vendor/",
+			"app/"
+		]
+    }
+
+}
