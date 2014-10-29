@@ -58,9 +58,14 @@ class SPR_Pitch_Migrate {
 	public function do_wp_import($limit = 0){
 		$limit = (int) $limit;
 				
-		// Setup and get post data
+		// Squeeze the links from the feed html
 		$this->_get_links();
+		
+		// Get post data from each linked page
 		$this->_get_posts($limit);
+				
+		// Do the import
+		$this->import_posts();
 				
 		return $this->posts;
 	}
@@ -98,13 +103,31 @@ class SPR_Pitch_Migrate {
 	public function _get_posts($limit = 0){
 		if(empty($this->links) || $limit == 0) return;
 		
-		$this->posts[] = array(
-			'title' => 'test',
-			'content' => 'blah blah blah',
-			'imgs' => array(
-				'http://localhost/steelcrest/wp-content/uploads/2014/06/Smaller-Bronze-2.jpg'
-			)
-		);
+		// Iterate over the links and add them to $this->posts array
+		for($i = 0; count($this->posts) < $limit; $i++){
+			$title = $content = $postdate = '';
+			$imgs = array();
+			
+			// Grab the page
+			$page = file_get_html($this->links[$i]);
+			
+			// Get the content
+			$content = $this->sanitize($page->find('.content',0)->innertext);
+			if(strpos($content,'{{brand') !== false) continue; // this is the feed page
+			
+			// Get the title
+			$title = $this->sanitize($page->find('.headline-content h1',0)->plaintext);
+			
+			// Pull any images
+			foreach($page->find('.img-container img') as $row) $imgs[] = $this->sanitize($row->src);
+			
+			$this->posts[] = array(
+				'title' => $title,
+				'content' => $content,
+				//'date' => $postdate, // Pitch Engine does not provide
+				'imgs' => $imgs
+			);
+		}
 	}
 	
 	public function _posts_to_xml($limit = 0){
@@ -202,7 +225,12 @@ class SPR_Pitch_Migrate {
 	}
 	
 	public function sanitize($var){
-		return filter_var($var, FILTER_SANITIZE_STRING);		
+		$var = trim(strip_tags($var, '<p><a><b><em><strong><br><hr>'));
+		//$var = filter_var($var, FILTER_SANITIZE_SPECIAL_CHARS, FILTER_FLAG_ENCODE_HIGH);		
+		
+		//$var = str_replace('â€™','&rsquo;', $var);
+	
+		return $var;
 	}
 	
 	public function tab($x = 0){
