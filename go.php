@@ -11,7 +11,7 @@ $mig = new Pitch_Migrate();
 /* Create import xml */
 $xml = $mig->create_wp_import(4);
 
-var_dump($xml);
+echo '<pre>'.htmlspecialchars($xml).'</pre>';
 
 echo count($mig->links).' posts found.';
 echo '<br><br>XML<pre>'.$xml.'</pre>';

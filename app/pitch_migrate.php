@@ -100,9 +100,11 @@ class Pitch_Migrate {
 		$xml = '';
 		$count = 0;
 		
+		$idcount= 1;
+		
 		foreach($this->posts as $row) {
 			if($limit > 0 && $count == $limit) continue;
-			
+			$imgs = '';
 			$xml .= '
 		<item>
 			<pubDate>'.date('Y-m-d H:i:s',mktime()).'</pubDate>
@@ -115,23 +117,31 @@ class Pitch_Migrate {
 			
 			if(!empty($row['imgs'])) {
 				foreach($row['imgs'] as $img){
-					$xml .= '
-			<wp:postmeta>
-				<wp:meta_key>_wp_attached_file</wp:meta_key>
-				<wp:meta_value><![CDATA['.$img.']]></wp:meta_value>
-			</wp:postmeta>';
+					$imgs .= $this->_image_attachment($img, $idcount);
+					$idcount++;
 				}
 			}
 			
 			$xml .='			
 		</item>';
-			
+			$xml .= $imgs;	
+				
+			$idcount++;	
 			$count++;
 		}	
 		
 		return $xml;
 	}
 
+	public function _image_attachment($src,$id = 0){
+		$img = '
+			<wp:attachment_url>'.$src.'</wp:attachment_url>
+			<wp:postmeta>
+				<wp:meta_key>_wp_attached_file</wp:meta_key>
+				<wp:meta_value><![CDATA['.$src.']]></wp:meta_value>
+			</wp:postmeta>';
+		return $img;
+	}
 
 	
 	/* Helpers */
