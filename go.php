@@ -9,7 +9,6 @@
 <body>
 	
 <?php
-
 require 'vendor/autoload.php';
 
 $mig = new SPR_Pitch_Migrate();
@@ -21,9 +20,9 @@ $mig->set_debug('y'); // default: n
 /* Create import xml */
 $posts = $mig->do_wp_import(1);
 
-echo '<pre>'; print_r($posts); echo '</pre>';
+//echo '<pre>'; print_r($posts); echo '</pre>';
 
-echo count($mig->links).' posts found.'; 
+//echo count($mig->links).' posts found.'; 
 
 ?>
 

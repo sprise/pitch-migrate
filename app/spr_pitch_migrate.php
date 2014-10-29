@@ -65,7 +65,7 @@ class SPR_Pitch_Migrate {
 		$this->_get_posts($limit);
 				
 		// Do the import
-		$this->import_posts();
+		$this->_import_posts();
 				
 		return $this->posts;
 	}
@@ -88,7 +88,7 @@ class SPR_Pitch_Migrate {
 		return $xml;
 	}
 	
-	public function _get_links(){
+	protected function _get_links(){
 		if(empty($this->config['src']) || !file_exists($this->config['src'])) die('Invalid source file.');
 		
 		$html = file_get_html($this->config['src']);
@@ -100,7 +100,7 @@ class SPR_Pitch_Migrate {
 		$this->showme($this->links,'Links');
 	}
 	
-	public function _get_posts($limit = 0){
+	protected function _get_posts($limit = 0){
 		if(empty($this->links) || $limit == 0) return;
 		
 		// Iterate over the links and add them to $this->posts array
@@ -202,7 +202,7 @@ class SPR_Pitch_Migrate {
 		return $ret;
 	}
 
-	public function _image_attachment($src,$id = 0){
+	protected function _image_attachment($src,$id = 0){
 		$img = '
 			<wp:attachment_url>'.$src.'</wp:attachment_url>
 			<wp:postmeta>
@@ -210,6 +210,38 @@ class SPR_Pitch_Migrate {
 				<wp:meta_value><![CDATA['.$src.']]></wp:meta_value>
 			</wp:postmeta>';
 		return $img;
+	}
+
+	protected function _import_posts(){
+		$temp = $this->posts;
+		rsort($temp); // Earliest first
+		$newid = 0;
+		
+		$count = 0;
+		foreach($temp as $row) {
+			// Save as post			
+			$postdata = array(
+				'post_name'      => sanitize_title($row['title']),	
+				'post_title'     => sanitize_text_field($row['title']), 				
+				'post_status'    => 'publish', 					
+				'post_type'      => $this->config['post-type'], 
+				'post_author'    => 1,			 				
+				'post_date'      => date('Y-m-d H:i:s', mktime())
+			);  
+			//$newid = wp_insert_post($postdata);
+			
+			// Save images if app
+			if(!empty($row['imgs'])){
+				$tid = 0;
+				foreach($row['imgs'] as $img) {
+					$img_id = wp_insert_attachment( $args, $file = false, $newid )
+			}
+			
+			$this->showme($row['title'],'New');
+			$count++;
+		}
+		
+		$this->showme($count,'Rows Imported');		
 	}
 
 
@@ -243,4 +275,9 @@ class SPR_Pitch_Migrate {
 		
 		return $ret;
 	}
+	
 }
+
+
+	function sanitize_text_field() {} 
+	function sanitize_title() {} 
