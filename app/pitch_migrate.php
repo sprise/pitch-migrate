@@ -11,6 +11,7 @@ class Pitch_Migrate {
 	var $dom = '';
 	var $links = array();
 	var $posts = array();
+	var $nl;
 	
 	public function __construct(){
 		// Default setup
@@ -18,6 +19,7 @@ class Pitch_Migrate {
 		$this->config['post-wrap'] = '.pitch-post';
 		$this->config['post-type'] = 'post';
 		$this->config['src'] = 'src.html'; 
+		$this->nl = "\n";
 		
 		// Instantiate simple_html_dom		
 		$this->dom = new simple_html_dom();
@@ -53,9 +55,9 @@ class Pitch_Migrate {
 	/* Lets do it */
 	
 	public function create_wp_import($limit = 0){
-		$xml = "\r\n".'<?xml version="1.0" encoding="UTF-8" ?>';
-		$xml .= "\r\n\t".'<channel>';
-		$xml .= "\r\n\t\t".'<wp:wxr_version>1.2</wp:wxr_version>';
+		$xml = $this->nl.'<?xml version="1.0" encoding="UTF-8" ?>';
+		$xml .= $this->nl.$this->tab(1).'<channel>';
+		$xml .= $this->nl.$this->tab(2).'<wp:wxr_version>1.2</wp:wxr_version>';
 	
 		
 		// Setup and get post data
@@ -65,8 +67,8 @@ class Pitch_Migrate {
 		// Build XML 
 		if(!empty($this->posts)) $xml .= $this->_posts_to_xml($limit);
 		
-		$xml .= "\r\n\t".'</channel>';
-		$xml .= "\r\n".'</xml>';
+		$xml .= $this->nl.$this->tab(1).'</channel>';
+		$xml .= $this->nl.'</xml>';
 		
 		return $xml;
 	}
@@ -122,8 +124,7 @@ class Pitch_Migrate {
 				}
 			}
 			
-			$xml .='			
-		</item>';
+			$xml .= $this->nl.$this->tab(2).'</item>';
 			$xml .= $imgs;	
 				
 			$idcount++;	
@@ -156,5 +157,16 @@ class Pitch_Migrate {
 	
 	public function sanitize($var){
 		return filter_var($var, FILTER_SANITIZE_STRING);		
+	}
+	
+	public function tab($x = 0){
+		$ret = "";
+		$x = (int) $x;
+		
+		if($x == 0) return $ret;
+		
+		for($i = 0; $i < $x; $i++) $ret .= "\t";
+		
+		return $ret;
 	}
 }
