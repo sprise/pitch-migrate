@@ -10,16 +10,22 @@ class Pitch_Migrate {
 	var $config = array();
 	var $dom = '';
 	var $links = array();
+	var $posts = array();
 	
 	public function __construct(){
 		// Default setup
 		$this->config['debug'] = 'n';
 		$this->config['post-wrap'] = '.pitch-post';
+		$this->config['post-type'] = 'post';
 		$this->config['src'] = 'src.html'; 
 		
 		// Instantiate simple_html_dom		
 		$this->dom = new simple_html_dom();
 	}
+	
+	
+	
+	/* Setup */
 	
 	public function set_debug($x = 'n'){
 		// Explicitly accept y only to activate
@@ -37,7 +43,35 @@ class Pitch_Migrate {
 		$this->showme($this->config['post-wrap'],'Wrapper element');
 	}
 	
-	public function get_links(){
+	public function set_posttype($type = 'post'){
+		$this->config['post-type'] = $type;
+		$this->showme($this->config['post-type'],'Post Type');
+	}
+	
+
+	
+	/* Lets do it */
+	
+	public function create_wp_import($limit = 0){
+		$xml = "\r\n".'<?xml version="1.0" encoding="UTF-8" ?>';
+		$xml .= "\r\n\t".'<channel>';
+		$xml .= "\r\n\t\t".'<wp:wxr_version>1.2</wp:wxr_version>';
+	
+		
+		// Setup and get post data
+		$this->_get_links();
+		$this->_get_posts();
+		
+		// Build XML 
+		if(!empty($this->posts)) $xml .= $this->_posts_to_xml($limit);
+		
+		$xml .= "\r\n\t".'</channel>';
+		$xml .= "\r\n".'</xml>';
+		
+		return $xml;
+	}
+	
+	public function _get_links(){
 		if(empty($this->config['src']) || !file_exists($this->config['src'])) die('Invalid source file.');
 		
 		$html = file_get_html($this->config['src']);
@@ -49,6 +83,59 @@ class Pitch_Migrate {
 		$this->showme($this->links,'Links');
 	}
 	
+	public function _get_posts(){
+		$this->posts = array();
+		if(empty($this->links)) return;
+		
+		$this->posts[] = array(
+			'title' => 'test',
+			'content' => 'blah blah blah',
+			'imgs' => array(
+				'http://localhost/steelcrest/wp-content/uploads/2014/06/Smaller-Bronze-2.jpg'
+			)
+		);
+	}
+	
+	public function _posts_to_xml($limit = 0){
+		$xml = '';
+		$count = 0;
+		
+		foreach($this->posts as $row) {
+			if($limit > 0 && $count == $limit) continue;
+			
+			$xml .= '
+		<item>
+			<pubDate>'.date('Y-m-d H:i:s',mktime()).'</pubDate>
+			<wp:post_date>'.date('Y-m-d H:i:s',mktime()).'</wp:post_date>
+			<wp:post_name>'.'asd'.'</wp:post_name>
+			<wp:status>publish</wp:status>
+			<title>'.$row['title'].'</title>
+			<wp:post_type>'.$this->config['post-type'].'</wp:post_type>
+			<content:encoded><![CDATA['.$row['content'].']]></content:encoded>';
+			
+			if(!empty($row['imgs'])) {
+				foreach($row['imgs'] as $img){
+					$xml .= '
+			<wp:postmeta>
+				<wp:meta_key>_wp_attached_file</wp:meta_key>
+				<wp:meta_value><![CDATA['.$img.']]></wp:meta_value>
+			</wp:postmeta>';
+				}
+			}
+			
+			$xml .='			
+		</item>';
+			
+			$count++;
+		}	
+		
+		return $xml;
+	}
+
+
+	
+	/* Helpers */
+		
 	public function showme($x,$m = ''){
 		if($this->config['debug'] != 'y') return;
 		
@@ -57,26 +144,7 @@ class Pitch_Migrate {
 		echo '</pre>';
 	}
 	
-	public function create_xml($posts){
-		$xml = '';
-		
-		foreach ($posts as $row) {
-			$title = $row[1]; 
-			
-			$postdata = array(
-				'post_name'      => sanitize_title($title),		//[ <string> ] // The name (slug) for your post
-				'post_title'     => $title, 					//[ <string> ] // The title of your post.
-				'post_status'    => 'publish', 					//[ 'draft' | 'publish' | 'pending'| 'future' | 'private' 
-				'post_type'      => 'vendors', 					//[ 'post' | 'page' | 'link' | 'nav_menu_item' | custom 
-				'post_author'    => 1,			 				// The user ID number of the author
-				'post_date'      => date('Y-m-d H:i:s',mktime()),	// The time post was made.
-				'comment_status' => 'closed', 					//[ 'closed' | 'open' ] 
-			);  
-						
-			$newid = wp_insert_post($postdata);
-			
-			$xml .= '<br>'.$title;
-		}	
-		
+	public function sanitize($var){
+		return filter_var($var, FILTER_SANITIZE_STRING);		
 	}
 }
