@@ -13,8 +13,7 @@
     
      "autoload": {
 		"classmap": [
-			"vendor/",
-			"app/"
+			"vendor/"
 		]
     }
 
