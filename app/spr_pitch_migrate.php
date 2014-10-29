@@ -16,15 +16,44 @@ class SPR_Pitch_Migrate {
 	public function __construct(){
 		// Default setup
 		$this->config['debug'] = 'n';
+		$this->config['title'] = 'Pitch Engine Import';
 		$this->config['post-wrap'] = '.pitch-post';
 		$this->config['post-type'] = 'post';
 		$this->config['src'] = 'src.html'; 
 		$this->nl = "\n";
 		$this->posts = array();
 		
-		// Instantiate simple_html_dom		
-		$this->dom = new simple_html_dom();
+		// Create settings page
+		add_action( 'admin_menu', array($this, 'admin_pane') );
 	}
+	
+	
+	
+	
+	/* WPize */
+	
+	public function admin_pane() {		
+		add_plugins_page($this->config['title'], $this->config['title'], 'edit_theme_options', 'pitch_migrate.php', array($this, 'admin_pane_render') );
+	}
+
+	public function admin_pane_render(){	
+		if(isset($_POST['submit']) && $_POST['task'] == 'do-import') $this->do_wp_import( (int) $_POST['limit'] );
+		//elseif(isset($_POST['submit']) && $_POST['task'] == 'check-links') $this->do_wp_import( (int) $_POST['limit'] );
+		$emstyle = 'style="font-size: .9em;"';
+		
+		$html = '<h1 style="padding: 40px 0 20px 0;">Pitch Engine Content Import</h1>';
+		$html .= '<p>Enter in some shortcodes below and they (and their output) will be removed from your pages and posts. Remove from the list to reinstate the shortcode.</p>';
+		
+		$html .= '<form method="post" action="'.site_url().'/wp-admin/admin.php?page=pitch_migrate.php">';
+		$html .= '<input type="hidden" name="task" value="do-import" />';		
+		
+		$html .= '<p><input class="button-primary button-large" type="submit" name="submit" value="Submit" /></p>';
+		$html .= '</form>';
+		
+		echo $html;
+	}	
+	
+	
 	
 	
 	
@@ -52,10 +81,12 @@ class SPR_Pitch_Migrate {
 	}
 	
 
+
 	
 	/* Lets do it */
 	
 	public function do_wp_import($limit = 0){
+		$this->dom = new simple_html_dom();
 		$limit = (int) $limit;
 				
 		// Squeeze the links from the feed html
@@ -219,6 +250,12 @@ class SPR_Pitch_Migrate {
 		
 		$count = 0;
 		foreach($temp as $row) {
+			// Correct image urls
+			if(!empty($row['imgs'])){
+				$img_base = site_url().	
+				
+			}
+			
 			// Save as post			
 			$postdata = array(
 				'post_name'      => sanitize_title($row['title']),	
@@ -233,8 +270,10 @@ class SPR_Pitch_Migrate {
 			// Save images if app
 			if(!empty($row['imgs'])){
 				$tid = 0;
+				
 				foreach($row['imgs'] as $img) {
-					$img_id = wp_insert_attachment( $args, $file = false, $newid )
+					$img_id = wp_insert_attachment( $args, $img, $newid );
+				}
 			}
 			
 			$this->showme($row['title'],'New');
@@ -269,7 +308,7 @@ class SPR_Pitch_Migrate {
 		$ret = "";
 		$x = (int) $x;
 		
-		if($x == 0) return $ret;
+		if($x < 1) return $ret;
 		
 		for($i = 0; $i < $x; $i++) $ret .= "\t";
 		
@@ -277,7 +316,3 @@ class SPR_Pitch_Migrate {
 	}
 	
 }
-
-
-	function sanitize_text_field() {} 
-	function sanitize_title() {} 
