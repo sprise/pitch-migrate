@@ -46,6 +46,7 @@ class SPR_Pitch_Migrate {
 		$this->config['post-type'] = 'post';
 		$this->config['src'] = __DIR__.'/src.html'; 
 		$this->config['limit'] = 0;
+		$this->config['offset'] = 0;
 		$this->config['sort'] = 'ASC';
 		$this->posts = array();
 		$this->msg = '';
@@ -84,6 +85,7 @@ class SPR_Pitch_Migrate {
 		$html .= '<input type="hidden" name="task" value="do-import" />';		
 		
 		$html .= '<p>Number of posts: 	<input type="text" name="limit" value="1" /></p>';
+		$html .= '<p>Offset: 	<input type="text" name="offset" value="0" /></p>';
 		$html .= '<p>Post type: 		<input type="text" name="post-type" value="post" /></p>';
 		$html .= '<p>Order: <select name="sort"><option value="ASC">Oldest First</option><option value="DESC">Newest First</option></select></p>';
 		$html .= '<p>Debug: <select name="debug"><option value="n">Off</option><option value="y">On</option></select></p>';
@@ -146,6 +148,7 @@ class SPR_Pitch_Migrate {
 	
 	protected function _setup_options(){
 		if(isset($_POST['limit']))	 $this->config['limit'] = (int) $_POST['limit']; 	 	
+		if(isset($_POST['offset']))	 $this->config['offset'] = (int) $_POST['offset']; 	 	
 		if(isset($_POST['sort'])) 	 $this->config['sort'] = $_POST['sort']; 	
 		
 		if(isset($_POST['debug']))	 $this->set_debug($this->sanitize($_POST['debug'])); 	
@@ -177,11 +180,13 @@ class SPR_Pitch_Migrate {
 		
 		// Iterate over the links and add them to $this->posts array
 		for($i = 0; count($this->posts) < $limit; $i++){
+			if(!isset($this->links[$i])) break; // no more links to add
+			
 			$title = $content = $postdate = '';
 			$imgs = array();
 			
 			// Grab the page
-			$page = file_get_html($this->links[$i]);
+			$page = file_get_html($this->links[$i+$this->config['offset']]);
 			
 			// Get the content
 			$content = $this->sanitize($page->find('.content',0)->innertext);
@@ -243,8 +248,6 @@ class SPR_Pitch_Migrate {
 				'post_date'      => date('Y-m-d H:i:s', mktime()),
 				'post_content'	 => $body
 			);  
-			
-			//$this->showme($postdata); die();
 			$newid = wp_insert_post($postdata);
 			
 			// Save images if app
@@ -259,6 +262,7 @@ class SPR_Pitch_Migrate {
 					// Set variables for storage
 					// fix file filename for query strings
 					preg_match('/[^\?]+\.(jpg|JPG|jpe|JPE|jpeg|JPEG|gif|GIF|png|PNG)/', $row['imgs'][$i], $matches);
+					if(empty($matches)) continue;
 					$file_array['name'] = basename($matches[0]);
 					$file_array['tmp_name'] = $tmp;
 
