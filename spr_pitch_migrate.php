@@ -35,7 +35,6 @@ class SPR_Pitch_Migrate {
 	var $dom = '';
 	var $links = array();
 	var $posts = array();
-	var $nl;
 	var $msg = '';
 	
 	public function __construct(){
@@ -209,7 +208,20 @@ class SPR_Pitch_Migrate {
 		
 		$count = 0;
 		foreach($this->posts as $row) {
-			$body = sanitize_text_field($row['content']);
+			$allowed = array(
+				'a' => array(
+					'href' => array(),
+					'title' => array()
+				),
+				'br' => array(),
+				'em' => array(),
+				'strong' => array(),
+				'p' => array(),
+				'img' => array(
+					'src' => array()
+				),
+			);
+			$body = wp_kses($row['content'], $allowed );
 			
 			// Correct image urls
 			if(!empty($row['imgs'])){
@@ -295,6 +307,7 @@ class SPR_Pitch_Migrate {
 	}
 	
 	protected function sanitize($var){
+		return $var;
 		return trim(filter_var($var, FILTER_SANITIZE_STRING, 'FILTER_ENCODE_HIGH'));
 	}
 	
