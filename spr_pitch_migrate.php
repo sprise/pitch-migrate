@@ -45,7 +45,7 @@ class SPR_Pitch_Migrate {
 		$this->config['post-wrap'] = '.pitch-post';
 		$this->config['post-type'] = 'post';
 		$this->config['src'] = __DIR__.'/src.html'; 
-		$this->config['limit'] = 0;
+		$this->config['limit'] = 1;
 		$this->config['offset'] = 0;
 		$this->config['sort'] = 'ASC';
 		$this->posts = array();
@@ -84,9 +84,9 @@ class SPR_Pitch_Migrate {
 		$html .= '<form method="post" action="'.site_url().'/wp-admin/admin.php?page='.$this->config['slug'].'">';
 		$html .= '<input type="hidden" name="task" value="do-import" />';		
 		
-		$html .= '<p>Number of posts: 	<input type="text" name="limit" value="1" /></p>';
-		$html .= '<p>Offset: 	<input type="text" name="offset" value="0" /></p>';
-		$html .= '<p>Post type: 		<input type="text" name="post-type" value="post" /></p>';
+		$html .= '<p>Number of posts: 	<input type="text" name="limit" value="'.$this->config['limit'].'" /></p>';
+		$html .= '<p>Offset: 	<input type="text" name="offset" value="'.$this->config['offset'].'" /></p>';
+		$html .= '<p>Post type: 		<input type="text" name="post-type" value="'.$this->config['post-type'].'" /></p>';
 		$html .= '<p>Order: <select name="sort"><option value="ASC">Oldest First</option><option value="DESC">Newest First</option></select></p>';
 		$html .= '<p>Debug: <select name="debug"><option value="n">Off</option><option value="y">On</option></select></p>';
 		$html .= '<p><input class="button-primary button-large" type="submit" name="submit" value="Import Content" /></p>';
@@ -133,7 +133,7 @@ class SPR_Pitch_Migrate {
 		
 		// How many posts? Post type? Debug?
 		$this->_setup_options();
-				
+	
 		// Squeeze the links from the feed html
 		$this->_get_links();
 		
@@ -180,7 +180,7 @@ class SPR_Pitch_Migrate {
 		
 		// Iterate over the links and add them to $this->posts array
 		for($i = 0; count($this->posts) < $limit; $i++){
-			if(!isset($this->links[$i])) break; // no more links to add
+			if(!isset($this->links[$i+$this->config['offset']])) break; // no more links to add
 			
 			$title = $content = $postdate = '';
 			$imgs = array();
